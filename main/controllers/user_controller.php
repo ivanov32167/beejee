@@ -14,7 +14,11 @@ class user_controller
 		{
 		if (isset($_SESSION['csrf_token']) && $_SESSION['csrf_token'] == $this->csrf)
 			{
-			if ($_POST['name'] === 'admin123' && $_POST['pass'] === '123')
+			if ($_POST['pass'] === '123' AND 
+					($_POST['name'] === 'admin123' OR 
+					 $_POST['name'] === 'Admin123' OR 
+					 $_POST['name'] === 'admin' OR 
+					 $_POST['name'] === 'Admin'))
 				{
 				$_SESSION['admin_mode'] = 1;
 				
