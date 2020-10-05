@@ -6,7 +6,9 @@
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="exampleModalLabel">Новая задача</h5>
+						<h5 class="add_task_header modal-title" id="exampleModalLabel">Новая задача</h5>
+						<h5 class="add_success-title mx-auto text-success" hidden>Ваша задача добавлена</h5>
+
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<span aria-hidden="true">&times;</span>
 						</button>

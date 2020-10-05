@@ -17,10 +17,6 @@ class tasks_model
 			{
 			$this->db_handler = new \PDO("sqlite:" . $GLOBALS['db_way']); // создание инстанса бд
 			}
-		else
-			{
-			die('не получилось подключиться к базе');
-			}
 		
 		if (!filesize($GLOBALS['db_way'])) // если база пустая, или ее нет
 			{ die('отсутствует база или таблицы в ней'); }

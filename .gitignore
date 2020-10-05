@@ -1,3 +1,2 @@
 time.txt
-*todos.db
-.gitignore
+*.db

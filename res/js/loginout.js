@@ -41,8 +41,6 @@ function ajax_logout() // подготовка запроса для деавт�
 			{
 			location.reload();
 			}
-		else
-			{ console.log('logout error') }
 		});
 	}
 
@@ -75,9 +73,9 @@ function create_task(form_elem) // подготовка запроса для с
 
 	const email_regexp = /^[а-яёйА-ЯЁЙ\w\.\-]+[\@]{1}[\w\.]+\.[a-zA-Z]{2,5}$/;
 	if (form_name.length < 1){show_validate_error('form_bad_name'); return;}
-	if (form_text.length < 1){show_validate_error('form_bad_content'); return;}
 	if (form_mail.length < 4){show_validate_error('form_bad_email'); return;}
 	if (email_regexp.test(String(form_mail)) === false){show_validate_error('form_bad_email'); return;}
+	if (form_text.length < 1){show_validate_error('form_bad_content'); return;}
 	
 	const target = base_way + 'addtask';
 	
@@ -90,9 +88,15 @@ function create_task(form_elem) // подготовка запроса для с
 
 	result.then((ajax_answer)=>
 		{
-
-		if (ajax_answer === 'TASK ADDED') { location.reload(); }
-		else { console.log('TASK ADD ERROR') }
+		if (ajax_answer === 'TASK ADDED') 
+			{
+			show_validate_error('add_success-title');
+			
+			setTimeout(() =>
+				{
+				location.reload();
+				}, 1500);
+			}
 		});
 	}
 
@@ -133,7 +137,5 @@ function set_filter(filter_button) // установка фильтров спи
 			{
 			location.reload();
 			}
-		else
-			{ console.log('FILTER CHECK ERROR') }
 		});
 	}

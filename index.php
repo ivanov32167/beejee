@@ -5,7 +5,7 @@ session_start();
 
 // основные настройки НАЧАЛО
 $controllersNS = 'my\controllers';
-$GLOBALS['db_way'] = __DIR__.'\\res\\db\\todos.db';
+$GLOBALS['db_way'] = __DIR__.'/res/db/todos.db';
 $GLOBALS['base_web_way'] = str_replace('index.php', '', $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF']);
 $GLOBALS['tasks_per_page'] = 3; // лимит задач на странице
 $GLOBALS['pag_offset_size'] = 3; // смещение в пагинации от текущей страницы
