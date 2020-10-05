@@ -14,35 +14,53 @@ class tasks_controller
 		{
 		$this->view = new views_controller();
 		
-		if (isset($_POST['csrf']))
-			{ $this->csrf = $_POST['csrf']; }
-		else
-			{ $this->csrf = 0; }
+		if ( isset($_POST['csrf']) )	{ $this->csrf = $_POST['csrf']; }
+		else							{ $this->csrf = 0; }
 		
 		$this->model = new tasks_model();
 		}
 	
-	public function show($id)
+	public function show($page) // отображение основного списка задач
 		{
-		$data = [];
-		$id < 2 || is_array($id) ? $id = 1: (int)$id;
+		$page < 2 || is_array($page) ? $page = 1: (int)$page; // нормализация номер страницы
 
-		$data = $this->model->get_data($id);
-		$data['page'] = $id;
-		
-		$data['page_limit'] = ceil($data['count'] / $GLOBALS['tasks_per_page']);
-		
-		
+		$data['page'] = $page;
 		$data['admin'] = $_SESSION['admin_mode'];
+
+		// установка флажков фильтра НАЧАЛО
+		if (!isset($_SESSION['filters'])) { $_SESSION['filters'] = []; }
+		$data['filters']['user'] = isset($_SESSION['filters']['user']) ? $_SESSION['filters']['user'] : 0;
+		$data['filters']['mail'] = isset($_SESSION['filters']['mail']) ? $_SESSION['filters']['mail'] : 0;
+		$data['filters']['done'] = isset($_SESSION['filters']['done']) ? $_SESSION['filters']['done'] : 0;
+		// установка флажков фильтра КОНЕЦ
 		
-		$this->view->generate('tasks.view.php', 'main.view.php', $data);
+		// получение записей из бд НАЧАЛО
+		$data_from_db = $this->model->get_data($data);
+		$data['posts'] = $data_from_db['posts'];
+		$data['page_limit'] = ceil($data_from_db['count'] / $GLOBALS['tasks_per_page']);
+		$data['count'] = $data_from_db['count'];
+		// получение записей из бд КОНЕЦ
+		
+		if ($data['page_limit'] > 0 AND $data['page'] > $data['page_limit']) // если требуемая страница больше существующей, идем на 404
+			{ return self::page_404(); }
+		else
+			{ $content_view = 'tasks.view.php'; }
+		
+		$this->view->generate($content_view, 'main.view.php', $data);
 		}
-	public function login()
+
+	public function page_404() // 404я ошибка
+		{
+		header($_SERVER["SERVER_PROTOCOL"] . " 404 Not Found");
+		$this->view->generate('404.view.php', 'main.view.php', null);
+		}
+
+	public function login() // отображение страницы авторизации
 		{	
 		$this->view->generate('login.view.php', 'main.view.php');
 		}
 
-	public function add()
+	public function add() // добавление новой задачи
 		{
 		if (isset($_SESSION['csrf_token']) && $_SESSION['csrf_token'] == $this->csrf)
 			{
@@ -66,13 +84,16 @@ class tasks_controller
 			{ echo 'CSRF ERROR'; }
 		}
 
-	public function del()
+	public function del() // удаление задачи
 		{
-		$task_id = $_POST['id'];
+		$task_id = $_POST['id'] + 0;
 		
-		if ( isset($_SESSION['csrf_token']) && 
-			       $_SESSION['csrf_token'] == $this->csrf && 
-				   $_SESSION['admin_mode'] === 1)
+		if ($_SESSION['admin_mode'] !== 1)
+			{
+			echo 'NEED LOGIN';
+			}
+		elseif ( isset($_SESSION['csrf_token']) && 
+			       $_SESSION['csrf_token'] == $this->csrf)
 			{
 			$result = $this->model->delete_data($task_id);
 
@@ -83,51 +104,71 @@ class tasks_controller
 			}
 		}
 
-	public function done_undone_task()
+	public function done_undone_task() // изменение флага задачи выполнена/не выполнена
 		{
-		$task_id = $_POST['id'];
-		$current_active = $_POST['done'];
-		
-		if ( isset($_SESSION['csrf_token']) && 
-			       $_SESSION['csrf_token'] == $this->csrf && 
-				   $_SESSION['admin_mode'] === 1)
+		if ($_SESSION['admin_mode'] !== 1)
 			{
-			$result = $this->model->done_undone_data($current_active, $task_id);
+			echo 'NEED LOGIN';
+			}
+		if ( isset($_SESSION['csrf_token']) && 
+			       $_SESSION['csrf_token'] == $this->csrf)
+			{
+			$result = $this->model->done_undone_data($_POST['done'] + 0, $_POST['id'] + 0);
 
 			echo $result;
 			}
 		}
 
-	public function edit_task()
+	public function edit_task() // редактирование текста задачи
 		{
-		$task_id = $_POST['id'];
 		$new_task_text = $_POST['text'];
 		
+		if ($_SESSION['admin_mode'] !== 1)
+			{
+			echo 'NEED LOGIN';
+			}
 		if ( isset($_SESSION['csrf_token']) && 
-			       $_SESSION['csrf_token'] == $this->csrf && 
-				   $_SESSION['admin_mode'] === 1)
+			       $_SESSION['csrf_token'] == $this->csrf)
 			{
 			if ( $this->validate($new_task_text, 'text') === FALSE )
 				{ echo 'TEXT TOO SHORT'; }
 			else
 				{
-				$result = $this->model->update_data($new_task_text, $task_id);
+				$result = $this->model->update_data(trim($new_task_text), $_POST['id'] + 0);
 
-				if ($result === 1)
-					{ echo 'EDITED'; }
-				else
-					{ echo 'EDIT FAIL'; }
+				if ($result === 1)	{ echo 'EDITED'; }
+				else				{ echo 'EDIT FAIL'; }
 				}
 			}
 		}
 
-	public function validate($item, $mode)
+	public function filter_task() // изменение режима фильтров списка задач
 		{
-		if ($mode === 'text')
-			{ return strlen($item) > 2 ? TRUE : FALSE; }
-		if ($mode === 'content')
-			{ return strlen($item) > 9 ? TRUE : FALSE; }
-		if ($mode === 'email')
-			{ return filter_var($item, FILTER_VALIDATE_EMAIL) ? TRUE : FALSE; }
+		if (isset($_POST['filter_mode']) AND ($_POST['filter_mode'] === 'user' 
+										   OR $_POST['filter_mode'] === 'mail' 
+										   OR $_POST['filter_mode'] === 'done'))
+			{
+			$filter_mode = $_POST['filter_mode'];
+			
+			if (isset($_SESSION['filters'][$filter_mode])) // изменение режима фильтров 1 -> 2, 2 -> 0, 0 -> 1
+				{
+				if ($_SESSION['filters'][$filter_mode] === 0)		{ $_SESSION['filters'][$filter_mode] = 1; }
+				elseif($_SESSION['filters'][$filter_mode] === 1)	{ $_SESSION['filters'][$filter_mode] = 2; }
+				else												{ $_SESSION['filters'][$filter_mode] = 0; }
+				}
+			else
+				{ $_SESSION['filters'][$filter_mode] = 0; } // режим фильтра по умолчанию (0 - выключен)
+
+			echo strtoupper($filter_mode);
+			}
+		else
+			{ return 'FAIL FILTER CHECK'; }
+		}
+
+	public function validate($item, $mode) // базовые проверки данных новой задачи
+		{
+		if ($mode === 'text')		{ return strlen($item) > 0							? TRUE : FALSE; }
+		if ($mode === 'content')	{ return strlen($item) > 0							? TRUE : FALSE; }
+		if ($mode === 'email')		{ return filter_var($item, FILTER_VALIDATE_EMAIL)	? TRUE : FALSE; }
 		}
 	}

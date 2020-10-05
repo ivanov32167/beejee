@@ -7,6 +7,11 @@
 	-moz-transition: opacity 5s .5s;
 	-ms-transition: opacity 5s .5s;
 	}
+.filter_button, .loginout_btn
+	{
+	cursor: pointer;
+	user-select: none;
+	}
 
 .bd-placeholder-img 
 	{

@@ -3,14 +3,14 @@
 	<form>
 		<input type="hidden" name="csrf" value="<?php echo $data['csrf'] ?>">
 		<div class="form-group">
-			<label for="exampleInputEmail1">Имя пользователя</label>
-			<input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="username" value="123">
+			<label>Имя пользователя</label>
+			<input type="email" class="form-control" aria-describedby="emailHelp" name="username">
 		</div>
 		<div class="form-group">
-			<label for="exampleInputPassword1">Пароль <small class="bad_pass text-danger ml-3" hidden>неверный пароль!</small></label>
-			<input type="password" class="form-control" id="exampleInputPassword1" name="password" value="123">
+			<label>Пароль</label>
+			<input type="password" class="form-control" name="password">
 		</div>
-		<button id="submit" type="button" class="btn btn-primary" onsubmit="ajax_authorise()">Войти</button>
-		
+		<div class="btn btn-primary" onclick="ajax_authorise()">Войти</div>
+		<small class="bad_pass text-danger ml-3" hidden>неверныe данные!</small>
 	</form>
 </div>

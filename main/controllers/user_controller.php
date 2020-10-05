@@ -1,8 +1,8 @@
 <?php
 namespace my\controllers;
 
-class user_controller {
-	
+class user_controller
+	{
 	public $csrf;
 	
 	public function __construct()
@@ -10,15 +10,14 @@ class user_controller {
 		$this->csrf = $_POST['csrf'];
 		}
 	
-	public function login()
+	public function login() // включение модераторских прав
 		{
-		//$csrf = $_POST['csrf'];
-		
 		if (isset($_SESSION['csrf_token']) && $_SESSION['csrf_token'] == $this->csrf)
 			{
-			if ($_POST['name'] === '123' && $_POST['pass'] === '123')
+			if ($_POST['name'] === 'admin123' && $_POST['pass'] === '123')
 				{
 				$_SESSION['admin_mode'] = 1;
+				
 				echo 'OK';
 				}
 			else
@@ -28,14 +27,16 @@ class user_controller {
 			{ echo 'CSRF FAIL'; }
 		}
 
-	public function logout()
+	public function logout() // выключение модераторских прав
 		{
-		if (isset($_SESSION['csrf_token']) && $_SESSION['csrf_token'] == $this->csrf)
+		if ($_SESSION['admin_mode'] === 1)
 			{
 			$_SESSION['admin_mode'] = 0;
 			echo 'LOGGED OUT';
 			}
 		else
-			{ echo 'CSRF FAIL'; }
+			{
+			echo 'ADMIN STATUS ERROR';
+			}
 		}
-}
+	}

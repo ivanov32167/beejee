@@ -1,20 +1,14 @@
-var form = document.querySelector('#submit');
-	
-form.addEventListener("click", ajax_authorise);
-
-function ajax_authorise()
+function ajax_authorise() // подготовка запроса для авторизации
 	{
-	console.log('auth');
-	var ajax_info = {};
-	ajax_info.target = base_way + 'login';
-	ajax_info.meth = 'POST';
+	//debugger;
+	const target = base_way + 'login';
 
 	const login_query =	"csrf="		+ document.querySelector('input[name="csrf"]').value
 					+ "&action="	+ '1'
 					+ "&name="		+ document.querySelector('input[name="username"]').value
 					+ "&pass="		+ document.querySelector('input[name="password"]').value;
 
-	let result = ajax_action(ajax_info, login_query);
+	let result = ajax_action(target, login_query);
 
 	result.then((ajax_answer)=>
 		{
@@ -22,52 +16,43 @@ function ajax_authorise()
 			{ window.location.href = base_way; }
 		else
 			{
-			let bad_pass = document.querySelector('.bad_pass');
-
-			bad_pass.hidden = false;
-
-			setTimeout(() =>
-				{
-				bad_pass.classList.add('my_fade');
-				}, 1000);
-			setTimeout(() =>
-				{
-				bad_pass.hidden = true;
-				bad_pass.classList.remove('my_fade');
-				}, 6000);
+			show_validate_error('bad_pass');
 			}
 		});
 	}
 
-function ajax_logout()
+function ajax_login() // подготовка запроса для деавторизации
 	{
-	var ajax_info = {};
-	ajax_info.target = base_way + 'logout';
-	ajax_info.csrf = document.querySelector('input[name="csrf"]').value;
-	ajax_info.meth = 'POST';
+	window.location.href = base_way + 'admin/';
+	}
 
-	const logout_query = "csrf="	+ ajax_info.csrf 
+function ajax_logout() // подготовка запроса для деавторизации
+	{
+	const target = base_way + 'logout';
+
+	const logout_query = "csrf="	+ document.querySelector('input[name="csrf"]').value
 					+ "&action="	+ '2';
 
-	const result = ajax_action(ajax_info, logout_query);
+	const result = ajax_action(target, logout_query);
 
 	result.then((ajax_answer)=>
 		{
-
 		if (ajax_answer === 'LOGGED OUT')
-			{ window.location.href = base_way; }
+			{
+			location.reload();
+			}
 		else
 			{ console.log('logout error') }
 		});
 	}
 
-function ajax_action(info, query)
+function ajax_action(target, query) // отправка подготовленного аякс запроса
 	{
 	let prom = new Promise((resolve) =>
 		{
 		const request = new XMLHttpRequest();
 
-		request.open(info.meth, info.target, true);
+		request.open('POST', target, true);
 		request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		request.addEventListener("readystatechange", () => 
 			{
@@ -80,147 +65,75 @@ function ajax_action(info, query)
 	return prom;
 	}
 
-
-// редактирование удаление задач
-
-function create_task()
+function create_task(form_elem) // подготовка запроса для создания задачи
 	{
-	//alert('ok');
-	var ajax_info = {};
-	ajax_info.target = base_way + 'addtask';
-	ajax_info.csrf = document.querySelector('input[name="csrf"]').value;
-	ajax_info.meth = 'POST';
+	let current_form = form_elem.closest('form');
 	
-	const add_task_query = "csrf="	+ ajax_info.csrf 
+	let form_name = current_form.querySelector('#add_task_name').value;
+	let form_mail = current_form.querySelector('#add_task_email').value;
+	let form_text = current_form.querySelector('#message-text').value;
+
+	const email_regexp = /^[а-яёйА-ЯЁЙ\w\.\-]+[\@]{1}[\w\.]+\.[a-zA-Z]{2,5}$/;
+	if (form_name.length < 1){show_validate_error('form_bad_name'); return;}
+	if (form_text.length < 1){show_validate_error('form_bad_content'); return;}
+	if (form_mail.length < 4){show_validate_error('form_bad_email'); return;}
+	if (email_regexp.test(String(form_mail)) === false){show_validate_error('form_bad_email'); return;}
+	
+	const target = base_way + 'addtask';
+	
+	const add_task_query = "csrf="	+ document.querySelector('input[name="csrf"]').value
 					  + "&user="	+ document.querySelector('input[name="user"]').value
 					  + "&email="	+ document.querySelector('input[name="email"]').value
 					  + "&content="	+ document.querySelector('textarea[name="content"]').value;
 
-	const result = ajax_action(ajax_info, add_task_query);
+	const result = ajax_action(target, add_task_query);
 
 	result.then((ajax_answer)=>
 		{
 
-		if (ajax_answer === 'TASK ADDED') { window.location.href = base_way; }
+		if (ajax_answer === 'TASK ADDED') { location.reload(); }
 		else { console.log('TASK ADD ERROR') }
 		});
 	}
 
-function delete_task(del_task_button)
+function show_validate_error(message_class) // отображение ошибок заполнения формы
 	{
-	var ajax_info = {};
-	ajax_info.target = base_way + 'del';
-	ajax_info.csrf = document.querySelector('meta[name="csrf-token"]').content;
-	ajax_info.meth = 'POST';
+	let error_field = document.querySelector('.' + message_class);
 
-	const logout_query = "csrf="	+ ajax_info.csrf 
-						+ "&id="	+ del_task_button.closest('.row').dataset.id;
+	error_field.hidden = false;
 
-	const result = ajax_action(ajax_info, logout_query);
-
-	result.then((ajax_answer)=>
+	setTimeout(() =>
 		{
-		if (ajax_answer === 'DELETE OK') { window.location.href = base_way; }
-		else if (ajax_answer === 'NEED LOGIN') { window.location.href = base_way; }
-		else { console.log('TASK DELETE ERROR') }
-		});
+		error_field.classList.add('my_fade');
+		}, 500);
+	setTimeout(() =>
+		{
+		error_field.hidden = true;
+		error_field.classList.remove('my_fade');
+		}, 2000);
 	}
 
-function switch_done_task(onoff_task_button)
+function set_filter(filter_button) // установка фильтров списка задач
 	{
-	var ajax_info = {};
-	ajax_info.target = base_way + 'onoff';
-	ajax_info.csrf = document.querySelector('meta[name="csrf-token"]').content;
-	ajax_info.meth = 'POST';
-
-	const logout_query = "csrf="	+ ajax_info.csrf 
-						+ "&id="	+ onoff_task_button.closest('.row').dataset.id
-						+ "&done="	+ onoff_task_button.dataset.active;
-
-	const result = ajax_action(ajax_info, logout_query);
-
-	result.then((ajax_answer)=>
-		{
-		if (Number(ajax_answer) === 1)
-			{
-			onoff_task_button.classList.remove('btn-success');
-			onoff_task_button.classList.add('btn-secondary');
-			onoff_task_button.dataset.active = 1;
-			onoff_task_button.textContent = 'В процессе';
-			}
-		else if (ajax_answer === 'NEED LOGIN')
-			{ window.location.href = base_way; }
-		else
-			{
-			onoff_task_button.classList.remove('btn-secondary');
-			onoff_task_button.classList.add('btn-success');
-			onoff_task_button.dataset.active = 0;
-			onoff_task_button.textContent = 'Завершена!';
-			}
-		});
-	}
-
-function edit_task(edit_elem, mode)
-	{
-	const task_id = edit_elem.closest('.row').dataset.id;
-	const backup_field = document.querySelector('#backup_field');
-	const edit_field = document.querySelector('#edit_text_' + task_id);
-	const edit_button = document.querySelector('#edit_button_' + task_id);
+	let filter_mode = 'none'
+	if (filter_button.id === "filter_user") { filter_mode = 'user'; }
+	if (filter_button.id === "filter_mail") { filter_mode = 'mail'; }
+	if (filter_button.id === "filter_done") { filter_mode = 'done'; }
 	
-	if (mode === 'edit')
-		{
-		console.log('mode edit');
-		edit_button.textContent = 'Сохранить';
-		edit_button.setAttribute('onclick', 'edit_task(this, \'save\')');
-		edit_button.classList.remove('btn-outline-secondary');
-		edit_button.classList.add('btn-warning');
-		
-		
-		
-		backup_field.textContent = edit_field.textContent;
-		edit_field.contentEditable = 'true';
-		edit_field.focus();
-		edit_field.setAttribute('onblur', 'edit_task(this, \'reset\')');
-		}
-	
-	if (mode === 'save')
-		{
-		console.log('mode save');
-		let content_to_save = edit_field.textContent;
-		backup_field.textContent = '';
-		edit_field.removeAttribute('onblur');
-		edit_field.contentEditable = 'false';
-		
-		edit_button.textContent = 'Редактировать';
-		edit_button.setAttribute('onclick', 'edit_task(this, \'edit\')');
-		edit_button.classList.remove('btn-warning');
-		edit_button.classList.add('btn-outline-secondary');
-		
-		save_new_task_content(content_to_save, task_id);
-		}
-	}
+	const target = base_way + 'filter';
 
-function save_new_task_content(content_to_save, task_id)
-	{
-	var ajax_info = {};
-	ajax_info.target = base_way + 'edit';
-	ajax_info.csrf = document.querySelector('meta[name="csrf-token"]').content;
-	ajax_info.meth = 'POST';
+	const filter_query = "filter_mode="	+ filter_mode;
 
-	const edit_query = "csrf="	+ ajax_info.csrf 
-						+ "&id="	+ task_id
-						+ "&text="	+ content_to_save;
-
-	const result = ajax_action(ajax_info, edit_query);
+	const result = ajax_action(target, filter_query);
 
 	result.then((ajax_answer)=>
 		{
 
-		if (ajax_answer === 'EDITED')
-			{ window.location.href = base_way; }
-		else if (ajax_answer === 'NEED LOGIN')
-			{ window.location.href = base_way; }
+		if (ajax_answer === 'USER' || ajax_answer === 'MAIL' || ajax_answer === 'DONE')
+			{
+			location.reload();
+			}
 		else
-			{ console.log('EDIT ERROR') }
+			{ console.log('FILTER CHECK ERROR') }
 		});
 	}
