@@ -29,9 +29,9 @@ class tasks_controller
 
 		// установка флажков фильтра НАЧАЛО
 		if (!isset($_SESSION['filters'])) { $_SESSION['filters'] = []; }
-		$data['filters']['user'] = isset($_SESSION['filters']['user']) ? $_SESSION['filters']['user'] : 0;
-		$data['filters']['mail'] = isset($_SESSION['filters']['mail']) ? $_SESSION['filters']['mail'] : 0;
-		$data['filters']['done'] = isset($_SESSION['filters']['done']) ? $_SESSION['filters']['done'] : 0;
+		$data['filters']['user'] = isset($_SESSION['filters']['user']) ? $_SESSION['filters']['user'] : 1;
+		$data['filters']['mail'] = isset($_SESSION['filters']['mail']) ? $_SESSION['filters']['mail'] : 1;
+		$data['filters']['done'] = isset($_SESSION['filters']['done']) ? $_SESSION['filters']['done'] : 1;
 		// установка флажков фильтра КОНЕЦ
 		
 		// получение записей из бд НАЧАЛО
